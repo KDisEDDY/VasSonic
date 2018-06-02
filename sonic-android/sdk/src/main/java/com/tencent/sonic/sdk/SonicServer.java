@@ -13,9 +13,12 @@
 
 package com.tencent.sonic.sdk;
 
+import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.tencent.sonic.sdk.quic.QuicSessionConnectionImpl;
 
 import org.json.JSONObject;
 
@@ -46,7 +49,8 @@ import static com.tencent.sonic.sdk.SonicSessionConnection.CUSTOM_HEAD_FILED_TEM
  */
 public class SonicServer implements SonicSessionStream.Callback {
     public static final String TAG = SonicConstants.SONIC_SDK_LOG_PREFIX + "SonicServer";
-
+    public static final int CONNECTION_MODE_HTTPURLCONNECTION = 1;
+    public static final int CONNECTION_MODE_QUICCONNECTION = 2;
     /**
      * A session connection implement.
      */
@@ -71,10 +75,15 @@ public class SonicServer implements SonicSessionStream.Callback {
     protected Map<String, List<String>> cachedResponseHeaders;
     private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-    public SonicServer(SonicSession session, Intent requestIntent) {
+    public SonicServer(SonicSession session, Intent requestIntent , int connectMode) {
         this.session = session;
         this.requestIntent = requestIntent;
-        connectionImpl = SonicSessionConnectionInterceptor.getSonicSessionConnection(session, requestIntent);
+        if(connectMode == CONNECTION_MODE_QUICCONNECTION){
+            connectionImpl = new QuicSessionConnectionImpl(session , requestIntent);
+        } else {
+            connectionImpl = SonicSessionConnectionInterceptor.getSonicSessionConnection(session, requestIntent);
+        }
+
     }
 
     /**

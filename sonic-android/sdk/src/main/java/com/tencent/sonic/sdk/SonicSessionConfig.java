@@ -82,6 +82,11 @@ public class SonicSessionConfig {
      */
     String USE_SONIC_CACHE_IN_BAD_NETWORK_TOAST = "Bad Network!";
 
+    public static final int CONNECTION_MODE_HTTPCONNECTION = 1;
+    public static final int CONNECTION_MODE_QUICCONNECTION = 2;
+
+    public int CONNECTION_MODE = CONNECTION_MODE_HTTPCONNECTION;
+
     /**
      * The mode of SonicSession, include{@link QuickSonicSession} and {@link StandardSonicSession}
      */
@@ -213,6 +218,10 @@ public class SonicSessionConfig {
             return this;
         }
 
+        public Builder setSonicConnectionMode(int mode){
+            target.CONNECTION_MODE = mode;
+            return this;
+        }
 
         public SonicSessionConfig build() {
             return target;

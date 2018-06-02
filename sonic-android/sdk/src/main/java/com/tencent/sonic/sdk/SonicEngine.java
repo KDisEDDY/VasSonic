@@ -262,6 +262,11 @@ public class SonicEngine {
             } else {
                 sonicSession = new StandardSonicSession(sessionId, url, sessionConfig);
             }
+            if(sessionConfig.CONNECTION_MODE == SonicSessionConfig.CONNECTION_MODE_QUICCONNECTION){
+                sonicSession.connectionMode.set(SonicServer.CONNECTION_MODE_QUICCONNECTION);
+            } else {
+                sonicSession.connectionMode.set(SonicServer.CONNECTION_MODE_HTTPURLCONNECTION);
+            }
             sonicSession.addSessionStateChangedCallback(sessionCallback);
 
             if (sessionConfig.AUTO_START_WHEN_CREATE) {

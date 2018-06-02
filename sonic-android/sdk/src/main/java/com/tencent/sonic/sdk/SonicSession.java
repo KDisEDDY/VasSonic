@@ -299,6 +299,12 @@ public abstract class SonicSession implements Handler.Callback {
      */
     protected final AtomicBoolean wasOnPageFinishInvoked = new AtomicBoolean(false);
 
+    /**
+     * the connection mode of request
+     * 1 : HttpUrlConnection
+     * 2 : QuicConnection
+     */
+    protected final AtomicInteger connectionMode = new AtomicInteger(SonicServer.CONNECTION_MODE_HTTPURLCONNECTION);
 
 
     /**
@@ -672,8 +678,7 @@ public abstract class SonicSession implements Handler.Callback {
             }
             return;
         }
-
-        server = new SonicServer(this, createConnectionIntent(sessionData));
+        server = new SonicServer(this, createConnectionIntent(sessionData) , connectionMode.get());
 
         // Connect to web server
         int responseCode = server.connect();

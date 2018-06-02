@@ -76,6 +76,10 @@ public class SonicConstants {
      */
     public static final int ERROR_CODE_CONNECT_NPE = -903;
 
+    /**
+     * Http(s) connection error : no network
+     */
+    public static final int ERROR_CODE_CONNECT_NNE = -904;
 
     /**
      * Verify local file failed
