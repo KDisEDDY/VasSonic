@@ -10,6 +10,14 @@ android {
         versionCode 3
         versionName "3.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        jackOptions{
+            enabled true
+        }
+    }
+
+    compileOptions{
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
     }
     buildTypes {
         release {
@@ -26,13 +34,13 @@ dependencies {
     })
 
     // compile sdk from jcenter
-     compile 'com.tencent.sonic:sdk:3.0.0'
+//    compile 'com.tencent.sonic:sdk:3.0.0'
 
     // compile sonic-sdk from local path
-//     compile project(path: ':sdk')
+     compile project(path: ':sdk')
 
     compile 'com.android.support:appcompat-v7:25.2.0'
-    compile 'com.android.support.constraint:constraint-layout:1.0.0-alpha7'
+    compile 'com.android.support.constraint:constraint-layout:1.1.0'
     compile 'com.android.support:design:25.3.1'
     testCompile 'junit:junit:4.12'
 }
