@@ -18,7 +18,10 @@ import android.content.Intent;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.tencent.sonic.sdk.quic.QuicBufferedInputStream;
+import com.tencent.sonic.sdk.quic.QuicInputStream;
 import com.tencent.sonic.sdk.quic.QuicSessionConnectionImpl;
+import com.tencent.sonic.sdk.quic.SonicQuicSessionStream;
 
 import org.json.JSONObject;
 
@@ -64,6 +67,8 @@ public class SonicServer implements SonicSessionStream.Callback {
 
     protected int responseCode;
 
+    protected int connectMode ;
+
     final protected SonicSession session;
 
     final protected Intent requestIntent;
@@ -78,6 +83,7 @@ public class SonicServer implements SonicSessionStream.Callback {
     public SonicServer(SonicSession session, Intent requestIntent , int connectMode) {
         this.session = session;
         this.requestIntent = requestIntent;
+        this.connectMode = connectMode;
         if(connectMode == CONNECTION_MODE_QUICCONNECTION){
             connectionImpl = new QuicSessionConnectionImpl(session , requestIntent);
         } else {
@@ -323,8 +329,14 @@ public class SonicServer implements SonicSessionStream.Callback {
      */
     public synchronized InputStream getResponseStream(AtomicBoolean breakConditions) {
         if (readServerResponse(breakConditions)) {
-            BufferedInputStream netStream = !TextUtils.isEmpty(serverRsp) ? null : connectionImpl.getResponseStream();
-            return new SonicSessionStream(this, outputStream, netStream);
+            BufferedInputStream netStream;
+            netStream = !TextUtils.isEmpty(serverRsp) ? null : connectionImpl.getResponseStream();
+            SonicUtils.log(TAG , Log.INFO ,"get the response Stream");
+            if(connectMode == CONNECTION_MODE_QUICCONNECTION){
+                return new SonicQuicSessionStream(this, outputStream , (QuicBufferedInputStream) netStream);
+            } else {
+                return new SonicSessionStream(this, outputStream, netStream);
+            }
         } else {
             return null;
         }

@@ -1,7 +1,6 @@
 package com.tencent.sonic.sdk.quic;
 
 import android.content.Intent;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.tencent.sonic.sdk.SonicConstants;
@@ -16,16 +15,13 @@ import org.chromium.net.UrlResponseInfo;
 import org.chromium.net.impl.UrlRequestError;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static com.tencent.sonic.sdk.SonicConstants.ERROR_CODE_SUCCESS;
 import static java.net.HttpURLConnection.HTTP_OK;
 
 /**
@@ -36,9 +32,9 @@ public class QuicSessionConnectionImpl extends SonicSessionConnection {
 
     private static final String TAG = "QuicSessionConnectionImpl";
 
-    private BufferedInputStream quicInputStream;
-    private LinkedBlockingQueue<List<ByteBuffer>> quicBlockQueue;
-    private List<ByteBuffer> bufferList ;
+    private QuicInputStream quicInputStream;
+    private QuicBufferedInputStream quicBufferedInputStream;
+    private LinkedBlockingQueue<ByteBuffer> quicBlockQueue;
     private CronetEngineUtils engineUtils;
     private UrlRequestCallback requestCallback = new UrlRequestCallback();
     private Map<String , List<String>> quicResponseHeaderFields;
@@ -51,8 +47,7 @@ public class QuicSessionConnectionImpl extends SonicSessionConnection {
     public QuicSessionConnectionImpl(SonicSession session, Intent intent) {
         super(session, intent);
         engineUtils = CronetEngineUtils.getsInstance().initEngine(SonicEngine.getInstance().getRuntime().getContext());
-        quicBlockQueue = new LinkedBlockingQueue(1);
-        bufferList = new ArrayList<>();
+        quicBlockQueue = new LinkedBlockingQueue();
     }
 
     @Override
@@ -90,7 +85,10 @@ public class QuicSessionConnectionImpl extends SonicSessionConnection {
     protected int internalConnect() {
         SonicUtils.log(TAG , Log.INFO , "the connect is began");
         if(quicInputStream == null){
-            quicInputStream = new BufferedInputStream(new ByteArrayInputStream(new byte[32]));
+            quicInputStream = new QuicInputStream(quicBlockQueue);
+        }
+        if(quicBufferedInputStream == null){
+            quicBufferedInputStream = new QuicBufferedInputStream(quicInputStream);
         }
         engineUtils.startWithURL(session.srcUrl , requestCallback);
         return responseCode = HTTP_OK;
@@ -99,19 +97,7 @@ public class QuicSessionConnectionImpl extends SonicSessionConnection {
     @Override
     protected BufferedInputStream internalGetResponseStream() {
         SonicUtils.log(TAG , Log.INFO , "getQuicResponseStream is began");
-        if(quicBlockQueue.size() > 0){
-            SonicUtils.log(TAG , Log.INFO , "readBuffer is began");
-            readBuffer();
-            return quicInputStream;
-        } else {
-            try {
-                quicBlockQueue.take();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            SonicUtils.log(TAG , Log.INFO , "return the stream directly");
-            return quicInputStream;
-        }
+        return quicBufferedInputStream;
     }
 
     class UrlRequestCallback extends UrlRequest.Callback {
@@ -124,14 +110,14 @@ public class QuicSessionConnectionImpl extends SonicSessionConnection {
         @Override
         public void onResponseStarted(UrlRequest urlRequest, UrlResponseInfo urlResponseInfo) throws Exception {
             quicResponseHeaderFields = urlResponseInfo.getAllHeaders();
-            urlRequest.read(ByteBuffer.allocateDirect(32 * 1024));
+            urlRequest.read(ByteBuffer.allocateDirect(10 * 1024));
             SonicUtils.log(TAG , Log.INFO , "the response is STARTED");
         }
 
         @Override
         public void onReadCompleted(UrlRequest urlRequest, UrlResponseInfo urlResponseInfo, ByteBuffer byteBuffer) throws Exception {
             SonicUtils.log(TAG , Log.INFO , "the response is transporting the data , size is " + byteBuffer.arrayOffset());
-            bufferList.add(byteBuffer);
+            quicBlockQueue.add(byteBuffer);
             byteBuffer.clear();
             urlRequest.read(byteBuffer);
         }
@@ -139,14 +125,14 @@ public class QuicSessionConnectionImpl extends SonicSessionConnection {
         @Override
         public void onSucceeded(UrlRequest urlRequest, UrlResponseInfo urlResponseInfo) {
             SonicUtils.log(TAG , Log.INFO , "the response transmission is succeed");
-
-//            readBuffer();
+            quicBufferedInputStream.setFinish(true);
         }
 
         @Override
         public void onFailed(UrlRequest urlRequest, UrlResponseInfo urlResponseInfo, CronetException e) {
             SonicUtils.log(TAG , Log.INFO , "the response transmission is fail, errorMsg ：" + e.getMessage());
             setResponseCode(urlResponseInfo.getHttpStatusCode());
+            quicBufferedInputStream.setFinish(true);
         }
     }
 
@@ -161,19 +147,5 @@ public class QuicSessionConnectionImpl extends SonicSessionConnection {
         } else {
             responseCode = SonicConstants.ERROR_CODE_UNKNOWN;
         }
-    }
-
-    private void readBuffer(){
-        for (List<ByteBuffer> bufferList: quicBlockQueue) {
-            try {
-                for(ByteBuffer buffer : bufferList){
-                    quicInputStream.read(buffer.array(), 0 , buffer.array().length);
-                }
-            } catch (IOException e) {
-                setResponseCode(SonicConstants.ERROR_CODE_CONNECT_IOE);
-                SonicUtils.log(TAG , Log.ERROR , e.getMessage());
-            }
-        }
-        quicBlockQueue.clear();
     }
 }

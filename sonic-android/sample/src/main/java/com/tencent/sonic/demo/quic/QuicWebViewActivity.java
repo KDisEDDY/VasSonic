@@ -23,7 +23,9 @@ import com.tencent.sonic.sdk.SonicSessionConfig;
 
 public class QuicWebViewActivity extends AppCompatActivity {
 
-    private static final String URL = "https://stgwhttp2.kof.qq.com/1.jpg";
+    private static final String URL = "https://stgwhttp2.kof.qq.com/3.jpg";
+    //http://mc.vip.qq.com/demo/indexv3
+    //https://stgwhttp2.kof.qq.com/3.jpg
     SonicSession session;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
