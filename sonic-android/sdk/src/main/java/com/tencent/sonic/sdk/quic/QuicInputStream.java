@@ -8,6 +8,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.security.acl.LastOwnerException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -18,50 +19,30 @@ public class QuicInputStream extends InputStream{
 
     private static String TAG = "QuicInputStream";
 
-    private LinkedBlockingQueue<ByteBuffer> blockingQueue;
+    private LinkedBlockingQueue<Integer> blockingQueue;
 
-    private int bufferIndex = 0;
+    private int account = 0;
 
-    private byte[] currentBufferArray = null;
+    private volatile boolean isFinish = false;
 
-
-    public QuicInputStream(LinkedBlockingQueue<ByteBuffer> blockingQueue) {
+    public QuicInputStream(LinkedBlockingQueue<Integer> blockingQueue) {
         this.blockingQueue = blockingQueue;
     }
 
     @Override
     public int read() throws IOException {
-        int c = 0;
-        if(currentBufferArray != null){
-            c = readSingleByte();
-        } else {
-            try {
-                currentBufferArray = blockingQueue.take().array();
-                SonicUtils.log(TAG , Log.INFO , "take next array , currentBufferArray's length is " + currentBufferArray.length);
-                c = readSingleByte();
-            } catch (InterruptedException e) {
-                SonicUtils.log(TAG , Log.ERROR , e.getMessage());
-                e.printStackTrace();
-            }
+        int c = -1;
+        try {
+            c = blockingQueue.take();
+//            SonicUtils.log(TAG , Log.INFO , "byte : " + c);
+        } catch (InterruptedException e) {
+            SonicUtils.log(TAG , Log.INFO , "read error : " + e.getMessage());
         }
-        return c;
-    }
-
-    private synchronized int readSingleByte(){
-        int c = 0;
-        if(bufferIndex >= currentBufferArray.length){
-            bufferIndex = 0;
-            currentBufferArray = null;
-            return c;
-        }
-        c = currentBufferArray[bufferIndex];
         if(c == -1){
-            currentBufferArray = null;
-            bufferIndex = 0;
-        } else {
-            bufferIndex++ ;
+            isFinish = true;
+//            SonicUtils.log(TAG , Log.INFO , "the stream is end");
         }
-        SonicUtils.log(TAG , Log.INFO , "reading the buffer , bufferIndex is " + bufferIndex);
+//        SonicUtils.log(TAG , Log.INFO , "had read account : " + account++);
         return c;
     }
 

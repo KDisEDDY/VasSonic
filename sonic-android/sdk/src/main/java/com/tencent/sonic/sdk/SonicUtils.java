@@ -660,10 +660,18 @@ public class SonicUtils {
             mime = "text/css";
         } else if (path.endsWith(".js")) {
             mime = "application/x-javascript";
-        } else if (path.endsWith(".jpg") || path.endsWith(".gif") ||
-                path.endsWith(".png") || path.endsWith(".jpeg") ||
-                path.endsWith(".webp") || path.endsWith(".bmp")) {
-            mime = "image/*";
+        } else if (path.endsWith(".jpg")) {
+            mime = "image/jpg";
+        } else if(path.endsWith(".gif")){
+            mime = "image/gif";
+        } else if(path.endsWith(".png")){
+            mime = "image/png";
+        } else if(path.endsWith(".jpeg")){
+            mime = "image/jpeg";
+        } else if(path.endsWith(".webp")){
+            mime = "image/webp";
+        } else if(path.endsWith(".bmp")){
+            mime = "image/bmp";
         }
         return mime;
     }

@@ -13,15 +13,11 @@
 
 package com.tencent.sonic.sdk;
 
-import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.tencent.sonic.sdk.quic.QuicBufferedInputStream;
-import com.tencent.sonic.sdk.quic.QuicInputStream;
 import com.tencent.sonic.sdk.quic.QuicSessionConnectionImpl;
-import com.tencent.sonic.sdk.quic.SonicQuicSessionStream;
 
 import org.json.JSONObject;
 
@@ -31,7 +27,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -332,11 +327,7 @@ public class SonicServer implements SonicSessionStream.Callback {
             BufferedInputStream netStream;
             netStream = !TextUtils.isEmpty(serverRsp) ? null : connectionImpl.getResponseStream();
             SonicUtils.log(TAG , Log.INFO ,"get the response Stream");
-            if(connectMode == CONNECTION_MODE_QUICCONNECTION){
-                return new SonicQuicSessionStream(this, outputStream , (QuicBufferedInputStream) netStream);
-            } else {
-                return new SonicSessionStream(this, outputStream, netStream);
-            }
+            return new SonicSessionStream(this, outputStream, netStream);
         } else {
             return null;
         }
@@ -417,6 +408,7 @@ public class SonicServer implements SonicSessionStream.Callback {
                     outputStream.write(buffer, 0, n);
                 }
 
+                SonicUtils.log(TAG , Log.ERROR , "the Server is response ");
                 if (n == -1) {
                     serverRsp = outputStream.toString(session.getCharsetFromHeaders());
                 }
